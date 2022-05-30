@@ -1,32 +1,93 @@
-`timescale 1ps/1ps
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-`include "bus_tests.svh"
-`include "bus_if.sv"
+`timescale 1ns/1ps
+
 module bus_tb;
-  bit clk, rst;
+  parameter WIDTH = 32;
+  reg clk, rst;
+  reg 					valid_dnt;
+  reg 	[WIDTH-1:0]		data_dnt;
+  reg 					ready_src;
+  //input
+  wire	 				valid_src;
+  wire [WIDTH-1:0] 		data_src;  
+  wire 					ready_dnt;
+  
   initial begin
     fork
       begin 
+		clk = 0;
         forever #5ns clk = !clk;
       end
       begin
-        #10ns;
-        rst <= 1'b1;
+		rst <= 1'b0;
         #12ns;
-        rst <= 1'b0;
+        rst <= 1'b1;
+        //#100ns;
+        //rst <= 1'b0;
         #10ns;
         rst <= 1'b1;
       end
     join_none
   end
 
-  bus_if intf(clk, rst);
+  bus_handshake dut(
+	.clk			(clk		)	
+	,.rst			(rst		)
+	,.valid_src		(valid_src	)
+	,.data_src		(data_src	)
+	,.ready_src		(ready_src	)
+	,.valid_dnt		(valid_dnt	)
+	,.data_dnt		(data_dnt	)
+	,.ready_dnt		(ready_dnt	)
+  );
 
+  //ready_src geenration
   initial begin
-    uvm_config_db#(virtual bus_if)::set(uvm_root::get(), "uvm_test_top.env.src_agent", "vif", intf);
-    uvm_config_db#(virtual bus_if)::set(uvm_root::get(), "uvm_test_top.env.dtn_agent", "vif", intf);
-    run_test("bus_transaction_test");
+			ready_src = 0;
+    #8ns	ready_src = 1;
+    #60ns	ready_src = 0;
+    #10ns	ready_src = 1;
+	#40ns	ready_src = 0;
+    #10ns	ready_src = 1;
+	#100ns  $finish;
+  end
+  
+  //valid_dnt generation
+  initial begin
+   			valid_dnt = 0;
+    #10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0001;
+    #15ns	valid_dnt = 1;
+			data_dnt = 32'h000_0002;
+    #10ns	valid_dnt = 0;
+			data_dnt = 32'h000_0000;
+	#15ns	valid_dnt = 1;
+			data_dnt = 32'h000_0003;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0004;
+	#15ns	valid_dnt = 1;
+			data_dnt = 32'h000_0005;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0006;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0007;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0008;
+	#10ns	valid_dnt = 0;
+			data_dnt = 32'h000_0000;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0009;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0010;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0011;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0010;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0011;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0012;
+	#10ns	valid_dnt = 1;
+			data_dnt = 32'h000_0013;
   end
 
 endmodule
